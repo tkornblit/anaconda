@@ -122,3 +122,11 @@ func (a TwitterApi) GetFriendsIdsAll(v url.Values) (c Cursor, err error) {
 	a.queryQueue <- query{BaseUrl + "/friends/ids.json", v, &c, _GET, response_ch}
 	return c, (<-response_ch).err
 }
+
+// Like GetFollowersIds, but returns a channel instead of a cursor and pre-fetches the remaining results
+// This channel is closed once all values have been fetched
+func (a TwitterApi) GetFollowersIdsAll(v url.Values) (c Cursor, err error) {
+	response_ch := make(chan response)
+	a.queryQueue <- query{BaseUrl + "/followers/ids.json", v, &c, _GET, response_ch}
+	return c, (<-response_ch).err
+}

@@ -103,7 +103,7 @@ func CustomTwitterApi(access_token string, access_token_secret string) *TwitterA
 	//TODO figure out how much to buffer this channel
 	//A non-buffered channel will cause blocking when multiple queries are made at the same time
 	queue := make(chan query)
-	c := &TwitterApi{&oauth.Credentials{Token: access_token, Secret: access_token_secret}, queue, nil, false}
+	c := &TwitterApi{&oauth.Credentials{Token: access_token, Secret: access_token_secret}, queue, nil, false, http.DefaultClient}
 	go c.customQuery()
 	return c
 }
@@ -261,6 +261,21 @@ func (c *TwitterApi) throttledQuery() {
 				}
 			}
 		}
+
+		response_ch <- response{data, err}
+	}
+}
+
+func (c *TwitterApi) customQuery() {
+	for q := range c.queryQueue {
+		url := q.url
+		form := q.form
+		data := q.data //This is where the actual response will be written
+		method := q.method
+
+		response_ch := q.response_ch
+
+		err := c.execQuery(url, form, data, method)
 
 		response_ch <- response{data, err}
 	}
